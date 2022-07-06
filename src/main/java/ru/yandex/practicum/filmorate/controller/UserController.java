@@ -31,7 +31,7 @@ public class UserController {
 
     //Разобраться с исключениями
     @PostMapping
-    public User createUser(@Valid @RequestBody User user) throws ValidationException {
+    public User createUser(@Valid @RequestBody User user)  {
         try {
             if (user.getEmail() == null || user.getEmail().isBlank()) {
                 throw new ValidationException("Указана неверная почта");
@@ -58,7 +58,7 @@ public class UserController {
     }
 
     @PutMapping
-    public User updateUser(@Valid @RequestBody User user) throws ValidationException {
+    public User updateUser(@Valid @RequestBody User user) {
         if (user.getEmail() == null || user.getEmail().isBlank()) {
             throw new ValidationException("Указана неверная почта");
         } else if ((user.getId() == null) || (user.getId() <= 0)) {

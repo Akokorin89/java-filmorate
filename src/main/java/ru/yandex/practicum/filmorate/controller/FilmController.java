@@ -33,7 +33,7 @@ public class FilmController {
 
     //добавление фильма
     @PostMapping
-    public Film addFilm(@Valid @RequestBody Film film) throws ValidationException {
+    public Film addFilm(@Valid @RequestBody Film film)  {
         try {
             if (film.getName() == null) {
                 throw new ValidationException("Фильм должен как-то называться");
@@ -50,7 +50,7 @@ public class FilmController {
 
     //обновление фильма
     @PutMapping
-    public Film updateFilm(@Valid @RequestBody Film film) throws ValidationException {
+    public Film updateFilm(@Valid @RequestBody Film film) {
         if (film.getName() == null) {
             throw new ValidationException("Фильм должен как-то называться");
         } else if ((film.getId() == null) || (film.getId() <= 0)) {
