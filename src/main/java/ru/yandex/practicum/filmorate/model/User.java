@@ -24,7 +24,7 @@ public class User {
     private String email;
     @Past(message = "birthday не может быть в будущем")
     private LocalDate birthday;
-    Set<Integer> friends = new HashSet<>();
+    private final Set<Integer> friends = new HashSet<>();
 
 }
 

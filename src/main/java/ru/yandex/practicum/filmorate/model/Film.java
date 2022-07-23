@@ -33,7 +33,7 @@ public class Film {
 
     @Positive
     private Double duration;
-    Set<Integer> likes = new HashSet<>();
+    private final Set<Integer> likes = new HashSet<>();
 
 
 }
