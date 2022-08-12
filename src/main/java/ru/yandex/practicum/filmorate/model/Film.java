@@ -4,8 +4,7 @@ import lombok.*;
 
 import javax.validation.constraints.*;
 import java.time.LocalDate;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 @Getter
 @Setter
@@ -33,7 +32,20 @@ public class Film {
 
     @Positive
     private Double duration;
-    private final Set<Integer> likes = new HashSet<>();
+    private Set<Integer> likes = new HashSet<>();
+    @NotNull
+    private Mpa mpa;
 
+    private Set<Genre> genres;
 
+    public Map<String, Object> toMap() {
+        Map<String, Object> values = new HashMap<>();
+        values.put("film_id", id);
+        values.put("film_name", name);
+        values.put("film_description", description);
+        values.put("film_release_date", releaseDate);
+        values.put("film_duration", duration);
+        if (getMpa() != null) values.put("mpa_id", mpa.getId());
+        return values;
+    }
 }

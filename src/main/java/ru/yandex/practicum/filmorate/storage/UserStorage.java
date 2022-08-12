@@ -1,10 +1,9 @@
 package ru.yandex.practicum.filmorate.storage;
 
-import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.List;
 
 
 public interface UserStorage {
@@ -15,9 +14,19 @@ public interface UserStorage {
 
     User updateUser(User user);
 
-    User getUser(int id);
+    User getUser(int userId);
 
-    HashMap<Integer, User> getUsers();
+    User deleteUser(int id);
 
-    void deleteUser(int id);
-        }
+    void removeAll();
+
+    void addFriend(int userId, int friendId);
+
+    List<User> getMutualFriends(int firstUserId, int secondUserId);
+
+    void deleteFriend(int firstUserId, int secondUserId);
+
+    public Collection<User> getAllFriends(int id);
+
+
+}

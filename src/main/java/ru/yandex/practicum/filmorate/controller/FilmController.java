@@ -1,8 +1,9 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import ru.yandex.practicum.filmorate.model.Film;
 import org.springframework.web.bind.annotation.*;
+import ru.yandex.practicum.filmorate.exceptions.NotFoundException;
+import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
 
 import javax.validation.Valid;
@@ -20,7 +21,7 @@ public class FilmController {
     }
 
     @PostMapping("/films")
-    public Film addFilm(@Valid @RequestBody Film film) {
+    public Film addFilm(@Valid @RequestBody Film film) throws NotFoundException {
         filmService.addFilm(film);
         return film;
     }
@@ -31,17 +32,17 @@ public class FilmController {
     }
 
     @PutMapping("/films")
-    public Film addOrUpdateFilm(@Valid @RequestBody Film film) {
+    public Film updateFilm(@Valid @RequestBody Film film) {
         return filmService.updateFilm(film);
     }
 
     @GetMapping("/films/{id}")
     public Film getFilm(@PathVariable("id") int id) {
-        return filmService.getFilm(id);
+        return filmService.getFilmById(id);
     }
 
     @PutMapping("/films/{id}/like/{userId}")
-    public void addLike(@PathVariable("id") int id, @PathVariable("userId") int userId) {
+    public void addLike(@PathVariable("id") int id, @PathVariable("userId") int userId) throws NotFoundException {
         filmService.addLike(id, userId);
     }
 
@@ -52,12 +53,12 @@ public class FilmController {
 
     @GetMapping("/films/popular")
     public Collection<Film> getPopularFilms(@Valid @RequestParam(defaultValue = "10") int count) {
-        return filmService.getMostPopular(count);
+        return filmService.showTopFilms(count);
     }
 
     @DeleteMapping("/films/{filmId}")
     public void deleteFilm(@Valid @PathVariable("filmId") int filmId) {
-        filmService.deleteFilm(filmId);
+        filmService.removeFilm(filmId);
     }
 
 }
