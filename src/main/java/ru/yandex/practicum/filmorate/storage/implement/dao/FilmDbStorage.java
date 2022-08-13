@@ -40,8 +40,6 @@ public class FilmDbStorage implements FilmStorage {
     }
 
     public void removeFilm(int filmId) {
-        String sqlQuerySearch = "SELECT film_id, film_name, film_description, film_release_date, film_duration " + "FROM films WHERE film_id = ?";
-        Optional<Film> result = Optional.ofNullable(jdbcTemplate.queryForObject(sqlQuerySearch, this::mapRowToFilm, filmId));
         String sqlQuery = "DELETE FROM films WHERE film_id = ?";
         jdbcTemplate.update(sqlQuery, filmId);
     }
@@ -68,11 +66,9 @@ public class FilmDbStorage implements FilmStorage {
                 film.getGenres().forEach(g -> simpleJdbcInsert.execute(Map.of("film_id", film.getId(), "genre_id", g.getId())));
             }
             if (film.getGenres() != null) {
-                for (Genre genre : film.getGenres()) {
                     Set<Genre> genres = new TreeSet<>(Comparator.comparingInt(Genre::getId));
                     genres.addAll(film.getGenres());
                     film.setGenres(genres);
-                }
             }
             return film;
         } else {
@@ -86,8 +82,8 @@ public class FilmDbStorage implements FilmStorage {
             String sqlQuery = "SELECT film_id, film_name, film_description, film_release_date, film_duration, mpa_id " + "FROM films WHERE film_id = ?";
             Optional<Film> result = Optional.ofNullable(jdbcTemplate.queryForObject(sqlQuery, this::mapRowToFilm, filmId));
             Film film = result.get();
-            if (result.isPresent()) {
 
+            if (result.isPresent()) {
                 String sqlQueryGenres = "SELECT g.genre_id, g.genre_name FROM film_genres AS fg " + "JOIN genres AS g ON g.genre_id = fg.genre_id WHERE fg.film_id = ?";
                 List<Genre> genres = jdbcTemplate.query(sqlQueryGenres, this::mapRowToGenre, filmId);
                 if (genres.size() > 0) {

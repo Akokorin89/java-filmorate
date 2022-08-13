@@ -10,7 +10,7 @@ import javax.validation.Valid;
 import java.util.Collection;
 
 @RestController
-@RequestMapping
+@RequestMapping(path = "/films")
 public class FilmController {
 
     private final FilmService filmService;
@@ -20,43 +20,43 @@ public class FilmController {
         this.filmService = filmService;
     }
 
-    @PostMapping("/films")
-    public Film addFilm(@Valid @RequestBody Film film) throws NotFoundException {
+    @PostMapping
+    public Film addFilm(@Valid @RequestBody Film film){
         filmService.addFilm(film);
         return film;
     }
 
-    @GetMapping("/films")
+    @GetMapping
     public Collection<Film> getAllFilms() {
         return filmService.getAllFilms();
     }
 
-    @PutMapping("/films")
+    @PutMapping
     public Film updateFilm(@Valid @RequestBody Film film) {
         return filmService.updateFilm(film);
     }
 
-    @GetMapping("/films/{id}")
+    @GetMapping("/{id}")
     public Film getFilm(@PathVariable("id") int id) {
         return filmService.getFilmById(id);
     }
 
-    @PutMapping("/films/{id}/like/{userId}")
+    @PutMapping("/{id}/like/{userId}")
     public void addLike(@PathVariable("id") int id, @PathVariable("userId") int userId) throws NotFoundException {
         filmService.addLike(id, userId);
     }
 
-    @DeleteMapping("/films/{id}/like/{userId}")
+    @DeleteMapping("/{id}/like/{userId}")
     public void deleteLike(@PathVariable("id") int id, @PathVariable("userId") int userId) {
         filmService.deleteLike(id, userId);
     }
 
-    @GetMapping("/films/popular")
+    @GetMapping("/popular")
     public Collection<Film> getPopularFilms(@Valid @RequestParam(defaultValue = "10") int count) {
         return filmService.showTopFilms(count);
     }
 
-    @DeleteMapping("/films/{filmId}")
+    @DeleteMapping("/{filmId}")
     public void deleteFilm(@Valid @PathVariable("filmId") int filmId) {
         filmService.removeFilm(filmId);
     }

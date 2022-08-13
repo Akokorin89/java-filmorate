@@ -1,7 +1,6 @@
 package ru.yandex.practicum.filmorate.storage;
 
 import org.springframework.stereotype.Component;
-import ru.yandex.practicum.filmorate.exceptions.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 
 import java.util.Collection;
@@ -11,7 +10,7 @@ import java.util.List;
 @Component
 public interface FilmStorage {
 
-    Film addFilm(Film film) throws NotFoundException;
+    Film addFilm(Film film);
 
     Film updateFilm(Film film);
 

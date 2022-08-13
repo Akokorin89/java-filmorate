@@ -16,8 +16,6 @@ import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
-
-import static org.springframework.http.HttpStatus.NOT_FOUND;
 @Slf4j
 @Component
 @Qualifier("UserDbStorage")
@@ -89,12 +87,13 @@ public class UserDbStorage implements UserStorage {
     @Override
     public Collection<User> getAllFriends(int userId) {
         try {
+            log.info("Получен список друзей {}",userId);
             String sqlQuery = "SELECT user_id, user_email, user_login, user_name, user_birthday FROM users WHERE user_id IN " +
                     "(SELECT to_id FROM friendships WHERE from_id = ? AND is_approved = true)";
             return jdbcTemplate.query(sqlQuery, this::mapRowToUser, userId);
         } catch (EmptyResultDataAccessException e) {
-            //???
-            return null;
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND,
+                    String.format("Пользователь с id %d не найден", userId));
         }
     }
 
