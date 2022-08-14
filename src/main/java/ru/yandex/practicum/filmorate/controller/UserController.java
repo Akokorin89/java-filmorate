@@ -1,16 +1,13 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.server.ResponseStatusException;
-import ru.yandex.practicum.filmorate.model.User;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.service.UserService;
 
 import javax.validation.Valid;
 import java.util.Collection;
-import java.util.NoSuchElementException;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping
@@ -37,25 +34,25 @@ public class UserController {
 
     @PutMapping("/users")
     public User updateUser(@Valid @RequestBody User user) {
-        userService.updateUser(user);
+        userService.updateUser(user.getId(), user);
         return user;
     }
 
     @GetMapping("/users/{id}")
     public User getUser(@PathVariable int id) {
-        return userService.getUser(id);
+        return userService.getUserById(id);
     }
 
     @PutMapping("/users/{id}/friends/{friendId}")
     public User addFriend(@PathVariable("id") int id, @PathVariable("friendId") int friendId) {
         userService.addFriend(id, friendId);
-        return userService.getUser(id);
+        return userService.getUserById(id);
     }
 
 
     @DeleteMapping("/users/{id}/friends/{friendId}")
     public void deleteFriend(@PathVariable("id") int id, @PathVariable("friendId") int friendId) {
-        userService.deleteFriend(getUser(id), getUser(friendId));
+        userService.removeFriends(id, friendId);
     }
 
     @GetMapping("/users/{id}/friends")
@@ -64,14 +61,8 @@ public class UserController {
     }
 
     @GetMapping("/users/{id}/friends/common/{otherId}")
-    private Collection<User> commonFriends(@PathVariable("id") Integer userId, @PathVariable("otherId") Integer otherId) {
-        try {
-            var user1 = userService.getUser(userId);
-            var user2 = userService.getUser(otherId);
-            return userService.getMutualFriends(user1, user2).stream().map(userService::getUser).collect(Collectors.toSet());
-        } catch (NoSuchElementException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
-        }
+    public ResponseEntity<?> getCommonFriends(@PathVariable int id, @PathVariable int otherId) {
+        return ResponseEntity.ok(userService.getMutualFriends(id, otherId));
     }
 }
 

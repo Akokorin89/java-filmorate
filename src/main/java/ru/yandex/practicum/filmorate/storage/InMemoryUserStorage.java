@@ -1,17 +1,19 @@
 package ru.yandex.practicum.filmorate.storage;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ResponseStatusException;
 import ru.yandex.practicum.filmorate.exceptions.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 
-import java.util.Collection;
-import java.util.HashMap;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Component
+@Qualifier("inMemoryUserStorage")
 public class InMemoryUserStorage implements UserStorage {
 
     private final HashMap<Integer, User> users = new HashMap<>();
@@ -21,11 +23,11 @@ public class InMemoryUserStorage implements UserStorage {
     public User createUser(User user) {
         try {
             if (user.getEmail() == null || user.getEmail().isBlank()) {
-                throw new ValidationException("Указана неверная почта");
+                throw new ValidationException("Указана неверная почта", "id", String.valueOf(user.getId()));
             } else if (users.containsValue(user)) {
-                throw new ValidationException("Пользователь с такой почтой уже существует");
+                throw new ValidationException("Пользователь с такой почтой уже существует", "id", String.valueOf(user.getId()));
             } else if (user.getLogin() == null || user.getLogin().isBlank()) {
-                throw new ValidationException("Логин пустой");
+                throw new ValidationException("Логин пустой", "id", String.valueOf(user.getId()));
             } else if (user.getName() == null || user.getName().isBlank()) {
                 user.setId(makeId());
                 setName(user);
@@ -52,23 +54,25 @@ public class InMemoryUserStorage implements UserStorage {
 
     @Override
     public User updateUser(User user) {
-        if (user.getId() != null) {
-            if (users.containsKey(user.getId())) {
-                setName(user);
-                users.put(user.getId(), user);
-                log.info("Обновлена информация о пользователе {}, id={}", user.getName(), user.getId());
-                return user;
-            } else {
-                throw new ResponseStatusException(HttpStatus.NOT_FOUND, String.format("Пользователь с id %d не найден", user.getId()));
-            }
-        } else {
-            createUser(user);
-            return user;
+        // Проверить
+        int result = user.getId();
+        if (result != -1) {
+            users.put(result, user);
+            return users.get(result);
         }
+        return user;
     }
 
     @Override
     public User getUser(int id) {
+        if (users.containsKey(id)) {
+            return users.get(id);
+        } else {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, String.format("Пользователь с id %d не найден", id));
+        }
+    }
+
+    private User findUser(int id) {
         if (users.containsKey(id)) {
             return users.get(id);
         } else {
@@ -81,8 +85,13 @@ public class InMemoryUserStorage implements UserStorage {
     }
 
     @Override
-    public void deleteUser(int id) {
+    public User deleteUser(int id) {
         throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED);
+    }
+
+    @Override
+    public void removeAll() {
+        users.clear();
     }
 
     private void setName(User user) {
@@ -99,10 +108,58 @@ public class InMemoryUserStorage implements UserStorage {
         if (id == null) {
             id = 1;
         } else if (id < 0) {
-            throw new ValidationException("Некорректный id");
+            throw new ValidationException("Некорректный id", "id", String.valueOf(users.get(getUser(id)).getId()));
         } else {
             id++;
         }
         return id;
+    }
+
+    public void addFriend(int userId, int friendId) {
+        if ((userId > 0 && friendId > 0) || ((getUser(userId) != null
+                && getUser(friendId) != null))) {
+            findUser(userId).getFriends().add(friendId);
+            findUser(friendId).getFriends().add(userId);
+            log.info("Пользователь {} добавил в друзья {}", userId, friendId);
+        } else {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND,
+                    String.format("Пользователь с id %d не найден", findUser(userId).getId()));
+        }
+    }
+
+    @Override
+    public List<User> getMutualFriends(int firstUserId, int secondUserId) {
+        return null;
+    }
+
+    public Collection<Integer> getMutualFriends(User user, User user2) {
+        Collection<Integer> mutualFriends = new HashSet<>();
+        for (int u : user.getFriends()) {
+            for (int u2 : user2.getFriends()) {
+                if (u == u2) {
+                    mutualFriends.add(u);
+                }
+            }
+        }
+        return mutualFriends;
+    }
+
+    @Override
+    public void deleteFriend(int firstUserId, int secondUserId) {
+        User user = getUser(firstUserId);
+        User user2 = getUser(secondUserId);
+        if (!user.getFriends().contains(user2.getId())) {
+            //прокинуть нужное исключение
+            throw new NoSuchElementException();
+        }
+        user.getFriends().remove(user2.getId());
+    }
+
+    public Collection<User> getAllFriends(int id) {
+        Set<Integer> friendsId = findUser(id).getFriends();
+        return friendsId.stream().map(r -> {
+            log.debug("Передан список  друзей пользователя {}", id);
+            return findUser(r);
+        }).filter(Objects::nonNull).collect(Collectors.toList());
     }
 }
