@@ -1,64 +1,63 @@
 package ru.yandex.practicum.filmorate.controller;
 
-
-import ru.yandex.practicum.filmorate.exceptions.ValidationException;
+import org.springframework.beans.factory.annotation.Autowired;
 import ru.yandex.practicum.filmorate.model.Film;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
+import ru.yandex.practicum.filmorate.service.FilmService;
 
 import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
-import java.time.LocalDate;
 import java.util.Collection;
-import java.util.HashMap;
 
 @RestController
-@RequestMapping("/films")
+@RequestMapping
 public class FilmController {
 
-    private final static Logger log = LoggerFactory.getLogger(FilmController.class);
+    private final FilmService filmService;
 
-    private HashMap<Integer, Film> filmList = new HashMap<>();
-
-    private Integer idCount = 0;
-
-    //получение всех фильмов
-    @GetMapping
-    public Collection<Film> getAllFilm() {
-        log.info("Получен запрос. Film");
-        return filmList.values();
-
+    @Autowired
+    public FilmController(FilmService filmService) {
+        this.filmService = filmService;
     }
 
-    //добавление фильма
-    @PostMapping
-    public Film addFilm(@Valid @RequestBody Film film)  {
-        try {
-            if (film.getName() == null) {
-                throw new ValidationException("Фильм должен как-то называться");
-            } else {
-                film.setId(++idCount);
-                filmList.put(film.getId(), film);
-                log.info("Film добавлен");
-            }
-        } catch (ValidationException e) {
-            System.out.println(e.getMessage());
-        }
+    @PostMapping("/films")
+    public Film addFilm(@Valid @RequestBody Film film) {
+        filmService.addFilm(film);
         return film;
     }
 
-    //обновление фильма
-    @PutMapping
-    public Film updateFilm(@Valid @RequestBody Film film) {
-        if (film.getName() == null) {
-            throw new ValidationException("Фильм должен как-то называться");
-        } else if ((film.getId() == null) || (film.getId() <= 0)) {
-            throw new ValidationException("Некорректный id");
-        } else {
-            filmList.put(film.getId(), film);
-            log.info("Film обновлен");
-            return film;
-        }
+    @GetMapping("/films")
+    public Collection<Film> getAllFilms() {
+        return filmService.getAllFilms();
     }
+
+    @PutMapping("/films")
+    public Film addOrUpdateFilm(@Valid @RequestBody Film film) {
+        return filmService.updateFilm(film);
+    }
+
+    @GetMapping("/films/{id}")
+    public Film getFilm(@PathVariable("id") int id) {
+        return filmService.getFilm(id);
+    }
+
+    @PutMapping("/films/{id}/like/{userId}")
+    public void addLike(@PathVariable("id") int id, @PathVariable("userId") int userId) {
+        filmService.addLike(id, userId);
+    }
+
+    @DeleteMapping("/films/{id}/like/{userId}")
+    public void deleteLike(@PathVariable("id") int id, @PathVariable("userId") int userId) {
+        filmService.deleteLike(id, userId);
+    }
+
+    @GetMapping("/films/popular")
+    public Collection<Film> getPopularFilms(@Valid @RequestParam(defaultValue = "10") int count) {
+        return filmService.getMostPopular(count);
+    }
+
+    @DeleteMapping("/films/{filmId}")
+    public void deleteFilm(@Valid @PathVariable("filmId") int filmId) {
+        filmService.deleteFilm(filmId);
+    }
+
 }

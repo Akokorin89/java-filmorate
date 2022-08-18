@@ -1,74 +1,79 @@
 package ru.yandex.practicum.filmorate.controller;
 
-
-import ru.yandex.practicum.filmorate.exceptions.ValidationException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 import ru.yandex.practicum.filmorate.model.User;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
+import ru.yandex.practicum.filmorate.service.UserService;
 
 import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Positive;
-import java.time.LocalDate;
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.NoSuchElementException;
+import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/users")
+@RequestMapping
 public class UserController {
 
-    private final static Logger log = LoggerFactory.getLogger(UserController.class);
-    private HashMap<Integer, User> userList = new HashMap<>();
-    private Integer idCount = 0;
+    private final UserService userService;
 
-    @GetMapping
-    public Collection<User> getUser() {
-        log.info("Получен запрос User.");
-        return userList.values();
+    @Autowired
+    public UserController(UserService userService) {
+        this.userService = userService;
+    }
+
+    @GetMapping("/users")
+    public Collection<User> getAllUsers() {
+        return userService.getAllUsers();
     }
 
 
-    //Разобраться с исключениями
-    @PostMapping
-    public User createUser(@Valid @RequestBody User user)  {
-        try {
-            if (user.getEmail() == null || user.getEmail().isBlank()) {
-                throw new ValidationException("Указана неверная почта");
-            } else if (userList.containsValue(user)) {
-                throw new ValidationException("Пользователь с такой почтой уже существует");
-            } else if (user.getLogin() == null || user.getLogin().isBlank()) {
-                throw new ValidationException("Логин пустой");
-            } else if (user.getName() == null || user.getName().isBlank()) {
-                user.setId(++idCount);
-                user.setName(user.getLogin());
-                System.out.println("Имя отсутствует, используем логин");
-                userList.put(user.getId(), user);
-                log.info("User добавлен");
-            } else {
-                user.setId(++idCount);
-                userList.put(user.getId(), user);
-                log.info("User добавлен");
-            }
-        } catch (ValidationException e) {
-            System.out.println(e.getMessage());
-        }
-
+    @PostMapping("/users")
+    public User createUser(@Valid @RequestBody User user) {
+        userService.createUser(user);
         return user;
     }
 
-    @PutMapping
+    @PutMapping("/users")
     public User updateUser(@Valid @RequestBody User user) {
-        if (user.getEmail() == null || user.getEmail().isBlank()) {
-            throw new ValidationException("Указана неверная почта");
-        } else if ((user.getId() == null) || (user.getId() <= 0)) {
-            throw new ValidationException("Некорректный id");
-        } else {
-            userList.put(user.getId(), user);
-            log.info("User обновлен");
-            return user;
-        }
+        userService.updateUser(user);
+        return user;
+    }
+
+    @GetMapping("/users/{id}")
+    public User getUser(@PathVariable int id) {
+        return userService.getUser(id);
+    }
+
+    @PutMapping("/users/{id}/friends/{friendId}")
+    public User addFriend(@PathVariable("id") int id, @PathVariable("friendId") int friendId) {
+        userService.addFriend(id, friendId);
+        return userService.getUser(id);
     }
 
 
+    @DeleteMapping("/users/{id}/friends/{friendId}")
+    public void deleteFriend(@PathVariable("id") int id, @PathVariable("friendId") int friendId) {
+        userService.deleteFriend(getUser(id), getUser(friendId));
+    }
+
+    @GetMapping("/users/{id}/friends")
+    public Collection<User> getFriend(@PathVariable("id") int id) {
+        return userService.getAllFriends(id);
+    }
+
+    @GetMapping("/users/{id}/friends/common/{otherId}")
+    private Collection<User> commonFriends(@PathVariable("id") Integer userId, @PathVariable("otherId") Integer otherId) {
+        try {
+            var user1 = userService.getUser(userId);
+            var user2 = userService.getUser(otherId);
+            return userService.getMutualFriends(user1, user2).stream().map(userService::getUser).collect(Collectors.toSet());
+        } catch (NoSuchElementException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        }
+    }
 }
+
+
+

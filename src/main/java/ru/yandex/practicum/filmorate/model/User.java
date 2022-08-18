@@ -4,6 +4,9 @@ import lombok.*;
 
 import javax.validation.constraints.*;
 import java.time.LocalDate;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 @Getter
 @Setter
@@ -12,14 +15,17 @@ import java.time.LocalDate;
 public class User {
 
     private Integer id;
-    @NotNull
-    @NotBlank
+    @NotNull(message = "Login не может быть null")
+    @NotBlank(message = "Login не может быть пустым")
     @NotEmpty
     private String login;
     private String name;
-    @Email
+    @Email(message = "email не корректный")
     private String email;
-    @Past
+    @Past(message = "birthday не может быть в будущем")
     private LocalDate birthday;
+    private final Set<Integer> friends = new HashSet<>();
 
 }
+
+
